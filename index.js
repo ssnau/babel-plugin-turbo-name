@@ -34,18 +34,52 @@ module.exports = function turboAutoName(babel) {
   var block = t.blockStatement.bind(t);
   var me = t.MemberExpression.bind(t);
   var id = t.identifier.bind(t);
+
+  var TURBO_NAME = 'turboName';
+  var CLASSES    = '_turboClasses';
   function makeAssign(expression, name) {
-    return  (
-      t.tryStatement(
-          t.blockStatement([
-            t.AssignmentExpression( '=',    expression, t.literal(name))
-          ]),
-          t.catchClause(
-            t.identifier('e'),
-            t.blockStatement([])
-          )
-        )
-      );
+    var window_turboClasses = t.MemberExpression(t.identifier('window'), t.identifier(CLASSES));
+    return [
+      t.AssignmentExpression(
+                        '=', 
+                        t.MemberExpression(expression, t.identifier(TURBO_NAME)),
+                        t.literal(name)
+                      ),
+       t.ifStatement(
+         t.BinaryExpression(
+            '!==',
+            t.UnaryExpression('typeof', t.identifier('window')),
+            t.literal('undefined')
+         ),
+         t.BlockStatement([
+            t.AssignmentExpression(
+                '=', 
+                window_turboClasses,
+                t.LogicalExpression('||', window_turboClasses, t.ObjectExpression([]))
+              ),
+              t.AssignmentExpression(
+                '=', 
+                t.MemberExpression(window_turboClasses, t.identifier(name)),
+                expression
+              )
+         ])
+      )
+   ]
+  }
+
+  function makeTurbo(expression, name) {
+   return (
+     t.ifStatement(
+       t.BinaryExpression(
+          '===',
+        t.UnaryExpression('typeof', expression),
+          t.literal('function')
+       ),
+       t.BlockStatement(
+        makeAssign(expression, name)
+       )
+     )
+    );
   }
   return new Plugin('turbo-name', {
     visitor: {
@@ -63,19 +97,11 @@ module.exports = function turboAutoName(babel) {
           if (filepath.indexOf(path.join(rootpath, 'client/page')) !== 0) return;
           var relname = path.relative(getRoot(filepath), filepath).replace(/\/index\.jsx?$/, '');
 
-          node.body.push(
-            makeAssign(me(
-                         me(id('exports'), id('default')),
-                         id('turboName')
-                       ), relname),
-           makeAssign(me(
-                        me(id('module'), id('exports')),
-                        id('turboName')
-                      ), relname),
-           makeAssign(me(me(me(id('module'), id('exports')), id('default')),
-                        id('turboName')
-                      ), relname)
-          );
+          var module_exports = t.MemberExpression(id('module'), id('exports'));
+          var exports_default =  t.MemberExpression(id('exports'), id('default'));
+          var count = 0;
+          node.body.push(makeTurbo(module_exports, relname + count));
+          node.body.push(makeTurbo(exports_default, relname + (count+1)));
         }
       }
     }

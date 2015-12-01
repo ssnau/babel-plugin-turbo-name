@@ -26,7 +26,7 @@ describe('babel auto prefix', function () {
           })(mo)
           `);
         var Clazz = mo.exports;
-        assert.ok(pagepath.indexOf(Clazz.turboName) > 0);
+        assert.ok(pagepath.indexOf(Clazz.turboName.slice(0, 10)) > 0);
     });
   });
 });
