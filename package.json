@@ -20,9 +20,11 @@
   },
   "homepage": "https://github.com/ssnau/babel-plugin-turbo-name#readme",
   "devDependencies": {
-    "glob": "^7.0.3",
-    "react": "^0.14.7",
     "babel-core": "^6.7.2",
-    "mocha": "^2.3.4"
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.7.0",
+    "babel-preset-react": "^6.5.0",
+    "glob": "^7.0.3",
+    "mocha": "^2.3.4",
+    "react": "^0.14.7"
   }
 }

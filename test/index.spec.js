@@ -13,7 +13,7 @@ describe('babel auto prefix', function () {
   function transform (filepath) {
     return babel.transformFileSync(filepath, {
       plugins: [turboNamePlugin, 'transform-es2015-modules-commonjs'],
-      presets: ['react'],
+      presets: ['react']
     }).code;
   }
 
