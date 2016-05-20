@@ -1,6 +1,10 @@
 var fs = require('fs');
 var path = require('path');
 
+function getPKG(root) {
+  return require(path.join(root, 'package.json'));
+}
+
 function getNodeProjectRoot (cwd) {
   var count = 0;
   var found = false;
@@ -93,19 +97,16 @@ module.exports = function turboAutoName (babel) {
           var file = _path.hub.file;
 
           var filepath = file.opts.filename;
-          // AVOID MAGIC PATH: client/page
-          // fast check!
-          if (!(/client\/page\/.*index\.jsx?$/).test(filepath)) {
-            return;
-          }
+          // fast check!! 必须是index.js或index.jsx文件
+          if (!/index\.jsx?$/.test(filepath)) return;
+
           var rootpath = getRoot(path.dirname(filepath));
-          if (!rootpath) {
-            throw new Error(`文件[${filepath}]往上查找不到package.json，您的项目可能没有根目录.`);
-          }
-          // check again!!
-          if (filepath.indexOf(path.join(rootpath, 'client/page')) !== 0) {
-            return;
-          }
+          if (!rootpath) throw new Error(`文件[${filepath}]往上查找不到package.json，您的项目可能没有根目录.`);
+          var pkg = getPKG(rootpath);
+          var pattern = new RegExp(pkg['turbo-plugin-path-pattern'] || ('client' + path.sep + 'page')); // 默认是在client/page下的文件，但可以自定义
+          // check again!! one for pattern, another for symlink case.
+          if (!pattern.test(filepath) || filepath.indexOf(rootpath) !== 0) return;
+
           var relname = path.relative(getRoot(filepath), filepath).replace(/\/index\.jsx?$/, '');
 
           var module_exports = t.MemberExpression(id('module'), t.stringLiteral('exports'), true);
