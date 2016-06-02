@@ -2,7 +2,11 @@ var fs = require('fs');
 var path = require('path');
 
 function getPKG(root) {
-  return require(path.join(root, 'package.json'));
+  try {
+    return require(path.join(root, 'package.json'));
+  } catch (e) {
+    return {};
+  }
 }
 
 function getNodeProjectRoot (cwd) {
